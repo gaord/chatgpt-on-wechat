@@ -67,10 +67,11 @@ class ChatGPTBot(Bot, OpenAIImage):
 
             api_key = context.get("openai_api_key")
             model = context.get("gpt_model")
-            new_args = None
+            new_args = self.args.copy()
+            new_args["chatId"] = self.args["model"]+ "-" + context["receiver"]
             if model:
-                new_args = self.args.copy()
                 new_args["model"] = model
+                
             # if context.get('stream'):
             #     # reply in stream
             #     return self.reply_text_stream(query, new_query, session_id)
@@ -120,6 +121,7 @@ class ChatGPTBot(Bot, OpenAIImage):
             # if api_key == None, the default openai.api_key will be used
             if args is None:
                 args = self.args
+            logger.debug("[CHATGPT] ChatCompletion args={}".format(args))
             response = openai.ChatCompletion.create(api_key=api_key, messages=session.messages, **args)
             # logger.debug("[CHATGPT] response={}".format(response))
             # logger.info("[ChatGPT] reply={}, total_tokens={}".format(response.choices[0]['message']['content'], response["usage"]["total_tokens"]))
