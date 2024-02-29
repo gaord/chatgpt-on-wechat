@@ -62,6 +62,7 @@ class ChatGPTBot(Bot, OpenAIImage):
                 reply = Reply(ReplyType.INFO, "配置已更新")
             if reply:
                 return reply
+            self.sessions.clear_all_session()
             session = self.sessions.session_query(query, session_id)
             logger.debug("[CHATGPT] session query={}".format(session.messages))
 
