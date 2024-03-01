@@ -25,6 +25,7 @@ from config import conf
 try:
     from voice.audio_convert import any_to_sil
 except Exception as e:
+    logger.exception("[WechatyChannel] {}".format(e))
     pass
 
 
@@ -39,6 +40,8 @@ class WechatyChannel(ChatChannel):
         config = conf()
         token = config.get("wechaty_puppet_service_token")
         os.environ["WECHATY_PUPPET_SERVICE_TOKEN"] = token
+        os.environ['WECHATY_PUPPET_SERVICE_ENDPOINT'] = "http://127.0.0.1:8788"
+        os.environ["WECHATY_PUPPET"] = "wechaty-puppet-service"
         asyncio.run(self.main())
 
     async def main(self):
