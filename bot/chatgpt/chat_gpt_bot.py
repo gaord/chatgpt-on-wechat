@@ -69,9 +69,11 @@ class ChatGPTBot(Bot, OpenAIImage):
             api_key = context.get("openai_api_key")
             model = context.get("gpt_model")
             new_args = self.args.copy()
-            new_args["chatId"] = self.args["model"]+ "-" + context["receiver"]
             if model:
                 new_args["model"] = model
+                new_args["chatId"] = model+ "-" + context["receiver"]
+            else:
+                new_args["chatId"] = self.args["model"]+ "-" + context["receiver"]
                 
             # if context.get('stream'):
             #     # reply in stream
