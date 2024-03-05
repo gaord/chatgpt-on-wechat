@@ -22,6 +22,8 @@ from common.singleton import singleton
 from common.utils import split_string_by_utf8_length
 from config import conf
 from voice.audio_convert import any_to_mp3, split_audio
+from cheroot.server import HTTPServer
+from cheroot.ssl.builtin import BuiltinSSLAdapter
 
 # If using SSL, uncomment the following lines, and modify the certificate path.
 # from cheroot.server import HTTPServer
@@ -42,6 +44,22 @@ class WechatMPChannel(ChatChannel):
         token = conf().get("wechatmp_token")
         aes_key = conf().get("wechatmp_aes_key")
         self.client = WechatMPClient(appid, secret)
+
+        self.client.menu.create({
+            "button": [
+                {
+                    "name": "横渠天地",
+                    "sub_button": [
+                        {
+                            "type": "view",
+                            "name": "虚拟人物设定",
+                            "url": "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx5ee8f0141b0bc9b9&redirect_uri=https%3A%2F%2Frole.x-city.com.cn%2Fstatic%2Findex.html&response_type=code&scope=snsapi_base&state=1234#wechat_redirect"
+                        }
+                    ]
+                }
+            ]
+        })
+
         self.crypto = None
         if aes_key:
             self.crypto = WeChatCrypto(token, aes_key, appid)
@@ -58,11 +76,15 @@ class WechatMPChannel(ChatChannel):
             t.setDaemon(True)
             t.start()
 
-    def startup(self):
+    def startup(self):        
+        HTTPServer.ssl_adapter = BuiltinSSLAdapter(
+                certificate='cert/role.x-city.com.cn.pem',
+                private_key='cert/role.x-city.com.cn.key')
+
         if self.passive_reply:
-            urls = ("/wx", "channel.wechatmp.passive_reply.Query")
+            urls = ("/wx", "channel.wechatmp.passive_reply.Query", "/api/(.*)", "channel.wechatmp.Api.Api")
         else:
-            urls = ("/wx", "channel.wechatmp.active_reply.Query")
+            urls = ("/wx", "channel.wechatmp.passive_reply.Query", "/api/(.*)", "channel.wechatmp.Api.Api")
         app = web.application(urls, globals(), autoreload=False)
         port = conf().get("wechatmp_port", 8080)
         web.httpserver.runsimple(app.wsgifunc(), ("0.0.0.0", port))
