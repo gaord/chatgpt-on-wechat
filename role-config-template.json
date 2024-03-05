@@ -1,0 +1,30 @@
+{
+    "aiRoles": [
+      {"id": "liyunlong", "name": "李云龙"},
+      {"id": "xiaoqingxuan", "name": "肖青璇"},
+      {"id": "linwanrong", "name": "林晚荣"}
+    ],
+    "userAIRelations": [
+      {
+        "id": "liyunlong",
+        "userRoles": [
+          {"id": "chuyunfei", "name": "楚云飞"},
+          {"id": "heshang", "name": "和尚"}
+        ]
+      },
+      {
+        "id": "xiaoqingxuan",
+        "userRoles": [
+          {"id": "linwanrong", "name": "林晚荣"},
+          {"id": "sandaye", "name": "三大爷"}
+        ]
+      },
+      {
+        "id": "linwanrong",
+        "userRoles": [
+          {"id": "xiaoqingxuan", "name": "肖青璇"},
+          {"id": "sandaye", "name": "三大爷"}
+        ]
+      }
+    ]
+  }
