@@ -33,14 +33,14 @@ available_setting = {
     "group_name_keyword_white_list": [],  # 开启自动回复的群名称关键词列表
     "group_chat_in_one_session": ["ChatGPT测试群"],  # 支持会话上下文共享的群名称
     "nick_name_black_list": [],  # 用户昵称黑名单
-    "group_welcome_msg": "",  # 配置新人进群固定欢迎语，不配置则使用随机风格欢迎 
+    "group_welcome_msg": "",  # 配置新人进群固定欢迎语，不配置则使用随机风格欢迎
     "trigger_by_self": False,  # 是否允许机器人触发
     "text_to_image": "dall-e-2",  # 图片生成模型，可选 dall-e-2, dall-e-3
     "image_proxy": True,  # 是否需要图片代理，国内访问LinkAI时需要
     "image_create_prefix": ["画", "看", "找"],  # 开启图片回复的前缀
     "concurrency_in_session": 1,  # 同一会话最多有多少条消息在处理中，大于1可能乱序
     "image_create_size": "256x256",  # 图片大小,可选有 256x256, 512x512, 1024x1024 (dall-e-3默认为1024x1024)
-    "group_chat_exit_group": False, 
+    "group_chat_exit_group": False,
     # chatgpt会话参数
     "expires_in_seconds": 3600,  # 无操作会话的过期时间
     # 人格描述
@@ -73,6 +73,10 @@ available_setting = {
     "qwen_agent_key": "",
     "qwen_app_id": "",
     "qwen_node_id": "",  # 流程编排模型用到的id，如果没有用到qwen_node_id，请务必保持为空字符串
+    "ali_tts_api_url": "https://nls-gateway-cn-shanghai.aliyuncs.com/stream/v1/tts",
+    "ali_tts_app_key": "",
+    "ali_tts_access_key_id": "",
+    "ali_tts_access_key_secret": "",
     # Google Gemini Api Key
     "gemini_api_key": "",
     # wework的通用配置
@@ -96,8 +100,8 @@ available_setting = {
     "azure_voice_api_key": "",
     "azure_voice_region": "japaneast",
     # elevenlabs 语音api配置
-    "xi_api_key": "",    #获取ap的方法可以参考https://docs.elevenlabs.io/api-reference/quick-start/authentication
-    "xi_voice_id": "",   #ElevenLabs提供了9种英式、美式等英语发音id，分别是“Adam/Antoni/Arnold/Bella/Domi/Elli/Josh/Rachel/Sam”
+    "xi_api_key": "",  # 获取ap的方法可以参考https://docs.elevenlabs.io/api-reference/quick-start/authentication
+    "xi_voice_id": "",  # ElevenLabs提供了9种英式、美式等英语发音id，分别是“Adam/Antoni/Arnold/Bella/Domi/Elli/Josh/Rachel/Sam”
     # 服务时间限制，目前支持itchat
     "chat_time_module": False,  # 是否开启服务时间限制
     "chat_start_time": "00:00",  # 服务开始时间
@@ -125,18 +129,15 @@ available_setting = {
     "wechatcomapp_secret": "",  # 企业微信app的secret
     "wechatcomapp_agent_id": "",  # 企业微信app的agent_id
     "wechatcomapp_aes_key": "",  # 企业微信app的aes_key
-
     # 飞书配置
     "feishu_port": 80,  # 飞书bot监听端口
     "feishu_app_id": "",  # 飞书机器人应用APP Id
     "feishu_app_secret": "",  # 飞书机器人APP secret
     "feishu_token": "",  # 飞书 verification token
     "feishu_bot_name": "",  # 飞书机器人的名字
-    
     # 钉钉配置
-    "dingtalk_client_id": "",  # 钉钉机器人Client ID 
-    "dingtalk_client_secret": "",  # 钉钉机器人Client Secret 
-    
+    "dingtalk_client_id": "",  # 钉钉机器人Client ID
+    "dingtalk_client_secret": "",  # 钉钉机器人Client Secret
     # chatgpt指令自定义触发词
     "clear_memory_commands": ["#清除记忆"],  # 重置会话指令，必须以#开头
     # channel配置
@@ -148,7 +149,7 @@ available_setting = {
     "plugin_trigger_prefix": "$",  # 规范插件提供聊天相关指令的前缀，建议不要和管理员指令前缀"#"冲突
     # 是否使用全局插件配置
     "use_global_plugin_config": False,
-    "max_media_send_count": 3,     # 单次最大发送媒体资源的个数
+    "max_media_send_count": 3,  # 单次最大发送媒体资源的个数
     "media_send_interval": 1,  # 发送图片的事件间隔，单位秒
     # 智谱AI 平台配置
     "zhipu_ai_api_key": "",
@@ -170,6 +171,7 @@ class Config(dict):
             self[k] = v
         # user_datas: 用户数据，key为用户名，value为用户数据，也是dict
         self.user_datas = {}
+        self.role_datas = {}
 
     def __getitem__(self, key):
         if key not in available_setting:
@@ -194,6 +196,28 @@ class Config(dict):
         if self.user_datas.get(user) is None:
             self.user_datas[user] = {}
         return self.user_datas[user]
+
+    def load_role_datas(self):
+        global config
+        config_path = "./role-config.json"
+        if not os.path.exists(config_path):
+            logger.info("配置文件不存在，将使用role-config-template.json模板")
+            config_path = "./role-config-template.json"
+
+        config_str = read_file(config_path)
+        logger.debug("[INIT] role-config str: {}".format(config_str))
+
+        self.role_datas = json.loads(config_str)
+
+    def get_airoles(self):
+        return self.role_datas.get("aiRoles", [])
+
+    def get_userroles_by_aiid(self, ai_id):
+        userRoles = self.role_datas.get("userAIRelations", [])
+        for userRole in userRoles:
+            if userRole["id"] == ai_id:
+                return userRole["userRoles"]
+        return None
 
     def load_user_datas(self):
         try:
@@ -254,6 +278,11 @@ def load_config():
     logger.info("[INIT] load config: {}".format(config))
 
     config.load_user_datas()
+    config.load_role_datas()
+
+
+def get_appdata_dir():
+    return os.path.join(os.path.expanduser("~"), ".{}".format(APP_NAME))
 
 
 def get_root():
@@ -307,6 +336,4 @@ def pconf(plugin_name: str) -> dict:
 
 
 # 全局配置，用于存放全局生效的状态
-global_config = {
-    "admin_users": []
-}
+global_config = {"admin_users": []}
